@@ -1,7 +1,7 @@
 import Order from "../models/order.js"
 import Product from "../models/product.js"
 import Stripe from "stripe"
-import user from "../models/user.js"
+import User from "../models/user.js"
 // PLACE ORDER COD
 // /api/order/cod
 export const placeOrderCod = async (req, res) => {
@@ -67,7 +67,8 @@ export const placeOrderStripe = async (req, res) => {
             items,
             amount,
             address,
-            paymentType: "Online",  
+            paymentType: "Online",
+            isPaid: true  
         })
 
         // Stripe gateway initialize
@@ -88,12 +89,16 @@ export const placeOrderStripe = async (req, res) => {
         return res.json({success: false, message: err.message})}}
 
 // Stripe webhooks to verify payments action: /stripe
-export const stripeWebhooks = async(req,res)=>{
-    // stripe gateway initialize
-    const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)
+export const stripeWebhooks = async (req, res) => {
 
-    const sig=req.headers['stripe-signature']
+    const stripeInstance = new Stripe(
+        process.env.STRIPE_SECRET_KEY
+    )
+
+    const sig = req.headers["stripe-signature"]
+
     let event
+
     try {
         event = stripeInstance.webhooks.constructEvent(
             req.body,
@@ -101,48 +106,58 @@ export const stripeWebhooks = async(req,res)=>{
             process.env.STRIPE_WEBHOOK_SECRET
         )
     } catch (err) {
-        return response.status(400).send(`Webhook Error: ${err.message}`)
+        console.log("WEBHOOK ERROR:", err.message)
+        return res.status(400).send(`Webhook Error: ${err.message}`)
     }
-    //handle the event
+
     switch (event.type) {
-        case "payment_intent.succeeded":{
-            const paymentIntent = event.data.object
-            const paymentIntentId = paymentIntent.id
 
-            // getting session metadata
-            const session = await stripeInstance.checkout.sessions.list({
-                payment_intent: paymentIntentId
-            })
+        case "checkout.session.completed": {
 
-            const {orderId, userId}= session.data[0].metadata
+            const session = event.data.object
 
-            // mark payment as paid
-            await Order.findByIdAndUpdate(orderId, {isPaid: true})
-            // clear user cart
-            await user.findByIdAndUpdate(userId, {cartItems: {}})
-            break;
+            console.log("🔥 STRIPE PAYMENT SUCCESS")
+            console.log("Session ID:", session.id)
+            console.log("Metadata:", session.metadata)
+
+            const { orderId, userId } = session.metadata
+
+            await Order.findByIdAndUpdate(
+                orderId,
+                { isPaid: true }
+            )
+
+            await User.findByIdAndUpdate(
+                userId,
+                { cartItems: {} }
+            )
+
+            console.log("✅ Order marked as paid:", orderId)
+
+            break
         }
-            
-        case "payment_intent.payment_failed":{
-            const paymentIntent = event.data.object
-            const paymentIntentId = paymentIntent.id
 
-            // getting session metadata
-            const session = await stripeInstance.checkout.sessions.list({
-                payment_intent: paymentIntentId
-            })
+        case "checkout.session.expired": {
 
-            const {orderId }= session.data[0].metadata
-            await Order.findByIdAndUpdate(orderId, {
-                isPaid: false
-            })
-            break;
+            const session = event.data.object
+
+            const { orderId } = session.metadata || {}
+
+            if (orderId) {
+                await Order.findByIdAndUpdate(
+                    orderId,
+                    { isPaid: false }
+                )
+            }
+
+            break
         }
+
         default:
-            console.error(`unhandled event type ${event.type}`)
-            break;
+            console.log(`Unhandled event: ${event.type}`)
     }
-    res.json({received: true})
+
+    res.json({ received: true })
 }
 
 // GET USER ORDERS
