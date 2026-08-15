@@ -17,7 +17,7 @@ const app = express()
 
 const allowedOrigins = [
     'http://localhost:5173',
-    // Fresh Vercel frontend URL yahan baad mein add karna
+    "https://greencart-rust-nine.vercel.app/"
 ]
 
 app.use(cors({
