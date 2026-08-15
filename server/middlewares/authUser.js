@@ -9,7 +9,7 @@ const authUser = async (req, res, next) => {
     if (!token) {
         return res.json({
             success: false,
-            message: 'Token not found'
+            message: 'Not authorised'
         })
     }
 
