@@ -1,38 +1,28 @@
 import jwt from 'jsonwebtoken'
 
-const authUser = async (req, res, next) => {
-    console.log("COOKIES:", req.cookies)
-    console.log("TOKEN:", req.cookies?.token)   
-    const { token } = req.cookies
-
-    if (!token) {
-        return res.json({
-            success: false,
-            message: 'Not authorised'
-        })
-    }
-
+export const isAuth = async (req, res) => {
     try {
-        const tokenDecode = jwt.verify(
-            token,
-            process.env.JWT_SECRET
-        )
+        // Don't cache authentication response
+        res.set('Cache-Control', 'no-store')
 
-        console.log("DECODED TOKEN:", tokenDecode)
+        const { userId } = req
 
-        if (tokenDecode.id) {
-            req.userId = tokenDecode.id
-        } else {
+        const user = await User.findById(userId).select('-password')
+
+        if (!user) {
             return res.json({
                 success: false,
-                message: 'User ID not found in token'
+                message: 'User not found'
             })
         }
 
-        next()
+        return res.json({
+            success: true,
+            user
+        })
 
     } catch (err) {
-        console.log("JWT ERROR:", err.message)
+        console.log('IS AUTH ERROR:', err.message)
 
         return res.json({
             success: false,
@@ -40,5 +30,3 @@ const authUser = async (req, res, next) => {
         })
     }
 }
-
-export default authUser
