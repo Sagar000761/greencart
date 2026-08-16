@@ -21,24 +21,28 @@ const Cart = () => {
         setCartArray(tempArr)
     }
 
-    const getUserAddress = async () => {
-        try {
-            const { data } = await axios.get('/api/address/get')
-            if (data.success) {
-                setAddress(data.addresses)
-                if (data.addresses.length > 0) {
-                    setSelectedAddress(data.addresses[0])
-                } else {
-                    toast.error(data.message)
-                }
-            } else {
-                toast.error(data.message)
+const getUserAddress = async () => {
+    try {
+        const { data } = await axios.get('/api/address/get')
+
+        if (data.success) {
+            setAddress(data.addresses)
+
+            if (data.addresses.length > 0) {
+                setSelectedAddress(data.addresses[0])
             }
-    
-        } catch (err) {
-            toast.error(err.message)
+        } else {
+            toast.error(data.message || "Failed to fetch addresses")
         }
+
+    } catch (err) {
+        toast.error(
+            err.response?.data?.message ||
+            err.message ||
+            "Failed to fetch addresses"
+        )
     }
+}
     useEffect(() => {
         if (user) {
             getUserAddress()
