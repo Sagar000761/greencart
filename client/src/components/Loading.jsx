@@ -3,31 +3,31 @@ import useAppContext from "../context/AppContext";
 import { useLocation } from "react-router-dom";
 
 const Loading = () => {
-    const { navigate, fetchUser } = useAppContext();
+    const { navigate, clearCart } = useAppContext();
     const { search } = useLocation();
 
     const query = new URLSearchParams(search);
     const nextUrl = query.get("next");
 
     useEffect(() => {
-        const handlePaymentSuccess = async () => {
+        const handleSuccess = async () => {
             if (!nextUrl) return;
 
-            // Give Stripe webhook a little time
-            await new Promise((resolve) =>
-                setTimeout(resolve, 2000)
-            );
+            // Wait for Stripe webhook to update database
+            await new Promise((resolve) => {
+                setTimeout(resolve, 3000);
+            });
 
-            // Get fresh user + cart from database
-            await fetchUser();
+            // Clear DB + frontend cart
+            await clearCart();
 
-            // Go to My Orders
+            // Go to orders
             navigate(`/${nextUrl}`, {
                 replace: true
             });
         };
 
-        handlePaymentSuccess();
+        handleSuccess();
     }, [nextUrl]);
 
     return (
@@ -37,4 +37,4 @@ const Loading = () => {
     );
 };
 
-export default Loading;
+export default Loading; 

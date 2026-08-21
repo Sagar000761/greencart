@@ -20,8 +20,9 @@ export const AppContextProvider = ({ children }) => {
     const [searchQuery, setSearchQuery] = useState([]);
 
     // =========================
-    // FETCH SELLER STATUS
+    // FETCH SELLER
     // =========================
+
     const fetchseller = async () => {
         try {
             const { data } = await axios.get("/api/seller/is-auth");
@@ -39,14 +40,20 @@ export const AppContextProvider = ({ children }) => {
     // =========================
     // FETCH USER
     // =========================
+
     const fetchUser = async () => {
         try {
-            const { data } = await axios.get("/api/user/is-auth");
+            const { data } = await axios.get("/api/user/is-auth", {
+                headers: {
+                    "Cache-Control": "no-cache"
+                }
+            });
+
+            console.log("FETCH USER:", data);
 
             if (data.success) {
                 setUser(data.user);
 
-                // IMPORTANT:
                 // Always take latest cart from database
                 setCartItems(data.user.cartItems || {});
             } else {
@@ -67,6 +74,7 @@ export const AppContextProvider = ({ children }) => {
     // =========================
     // FETCH PRODUCTS
     // =========================
+
     const fetchProducts = async () => {
         try {
             const { data } = await axios.get("/api/product/list");
@@ -82,27 +90,22 @@ export const AppContextProvider = ({ children }) => {
     };
 
     // =========================
-    // SYNC CART WITH DATABASE
+    // SYNC CART DATABASE
     // =========================
+
     const syncCartWithDatabase = async (cartData) => {
         try {
             const { data } = await axios.post(
                 "/api/cart/update",
                 {
                     cartItems: cartData
-                },
-                {
-                    withCredentials: true
                 }
             );
 
             console.log("CART UPDATE RESPONSE:", data);
 
-            if (!data.success) {
-                console.log("CART UPDATE FAILED:", data.message);
-            }
-
             return data;
+
         } catch (err) {
             console.log(
                 "CART UPDATE ERROR:",
@@ -111,7 +114,9 @@ export const AppContextProvider = ({ children }) => {
 
             return {
                 success: false,
-                message: err.response?.data?.message || err.message
+                message:
+                    err.response?.data?.message ||
+                    err.message
             };
         }
     };
@@ -119,6 +124,7 @@ export const AppContextProvider = ({ children }) => {
     // =========================
     // ADD TO CART
     // =========================
+
     const addToCart = async (itemId) => {
         if (!user) {
             toast.error("Please login first");
@@ -141,8 +147,9 @@ export const AppContextProvider = ({ children }) => {
     };
 
     // =========================
-    // UPDATE CART QUANTITY
+    // UPDATE CART
     // =========================
+
     const updateCart = async (itemId, quantity) => {
         const cartData = structuredClone(cartItems);
 
@@ -162,6 +169,7 @@ export const AppContextProvider = ({ children }) => {
     // =========================
     // REMOVE FROM CART
     // =========================
+
     const removeFromCart = async (itemId) => {
         const cartData = structuredClone(cartItems);
 
@@ -183,27 +191,43 @@ export const AppContextProvider = ({ children }) => {
     // =========================
     // CLEAR CART
     // =========================
+
     const clearCart = async () => {
         try {
-            // Clear frontend
+            // Clear frontend immediately
             setCartItems({});
 
             // Clear database
-            const result = await syncCartWithDatabase({});
+            const { data } = await axios.post(
+                "/api/cart/update",
+                {
+                    cartItems: {}
+                }
+            );
 
-            if (result?.success) {
-                console.log("🛒 Cart cleared successfully");
+            console.log("CLEAR CART RESPONSE:", data);
+
+            if (data.success) {
+                console.log("✅ CART CLEARED");
             } else {
-                console.log("❌ Failed to clear cart");
+                console.log(
+                    "❌ CART CLEAR FAILED:",
+                    data.message
+                );
             }
+
         } catch (err) {
-            console.log("CLEAR CART ERROR:", err);
+            console.log(
+                "CLEAR CART ERROR:",
+                err.response?.data || err.message
+            );
         }
     };
 
     // =========================
-    // GET CART COUNT
+    // CART COUNT
     // =========================
+
     const getCartCount = () => {
         let totalCount = 0;
 
@@ -215,18 +239,22 @@ export const AppContextProvider = ({ children }) => {
     };
 
     // =========================
-    // GET CART TOTAL
+    // CART AMOUNT
     // =========================
+
     const getCartAmount = () => {
         let totalAmount = 0;
 
         for (const item in cartItems) {
             const itemInfo = products.find(
-                (productItem) => productItem._id === item
+                (productItem) =>
+                    productItem._id === item
             );
 
             if (itemInfo && cartItems[item] > 0) {
-                totalAmount += itemInfo.offerPrice * cartItems[item];
+                totalAmount +=
+                    itemInfo.offerPrice *
+                    cartItems[item];
             }
         }
 
@@ -236,6 +264,7 @@ export const AppContextProvider = ({ children }) => {
     // =========================
     // INITIAL DATA
     // =========================
+
     useEffect(() => {
         fetchUser();
         fetchseller();
@@ -246,13 +275,10 @@ export const AppContextProvider = ({ children }) => {
         navigate,
         user,
         setUser,
-
         isSeller,
         setIsSeller,
-
         showUserLogin,
         setShowUserLogin,
-
         products,
         currency,
 
