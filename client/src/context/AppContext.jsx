@@ -45,13 +45,20 @@ export const AppContextProvider = ({ children }) => {
 
             if (data.success) {
                 setUser(data.user);
+
+                // IMPORTANT:
+                // Always take latest cart from database
                 setCartItems(data.user.cartItems || {});
             } else {
                 setUser(null);
                 setCartItems({});
             }
         } catch (err) {
-            console.log("FETCH USER ERROR:", err.response?.data || err.message);
+            console.log(
+                "FETCH USER ERROR:",
+                err.response?.data || err.message
+            );
+
             setUser(null);
             setCartItems({});
         }
@@ -81,8 +88,12 @@ export const AppContextProvider = ({ children }) => {
         try {
             const { data } = await axios.post(
                 "/api/cart/update",
-                { cartItems: cartData },
-                { withCredentials: true }
+                {
+                    cartItems: cartData
+                },
+                {
+                    withCredentials: true
+                }
             );
 
             console.log("CART UPDATE RESPONSE:", data);
@@ -122,10 +133,8 @@ export const AppContextProvider = ({ children }) => {
             cartData[itemId] = 1;
         }
 
-        // Update frontend
         setCartItems(cartData);
 
-        // Update database
         await syncCartWithDatabase(cartData);
 
         toast.success("Added to Cart");
@@ -137,12 +146,14 @@ export const AppContextProvider = ({ children }) => {
     const updateCart = async (itemId, quantity) => {
         const cartData = structuredClone(cartItems);
 
-        cartData[itemId] = quantity;
+        if (quantity <= 0) {
+            delete cartData[itemId];
+        } else {
+            cartData[itemId] = quantity;
+        }
 
-        // Update frontend
         setCartItems(cartData);
 
-        // Update database
         await syncCartWithDatabase(cartData);
 
         toast.success("Cart updated");
@@ -157,15 +168,13 @@ export const AppContextProvider = ({ children }) => {
         if (cartData[itemId]) {
             cartData[itemId] -= 1;
 
-            if (cartData[itemId] === 0) {
+            if (cartData[itemId] <= 0) {
                 delete cartData[itemId];
             }
         }
 
-        // Update frontend
         setCartItems(cartData);
 
-        // Update database
         await syncCartWithDatabase(cartData);
 
         toast.success("Removed from cart");
@@ -174,10 +183,22 @@ export const AppContextProvider = ({ children }) => {
     // =========================
     // CLEAR CART
     // =========================
-    const clearCart = () => {
-        // Only clear frontend state here.
-        // Stripe webhook clears the database after successful payment.
-        setCartItems({});
+    const clearCart = async () => {
+        try {
+            // Clear frontend
+            setCartItems({});
+
+            // Clear database
+            const result = await syncCartWithDatabase({});
+
+            if (result?.success) {
+                console.log("🛒 Cart cleared successfully");
+            } else {
+                console.log("❌ Failed to clear cart");
+            }
+        } catch (err) {
+            console.log("CLEAR CART ERROR:", err);
+        }
     };
 
     // =========================
@@ -205,8 +226,7 @@ export const AppContextProvider = ({ children }) => {
             );
 
             if (itemInfo && cartItems[item] > 0) {
-                totalAmount +=
-                    itemInfo.offerPrice * cartItems[item];
+                totalAmount += itemInfo.offerPrice * cartItems[item];
             }
         }
 
@@ -224,7 +244,6 @@ export const AppContextProvider = ({ children }) => {
 
     const value = {
         navigate,
-
         user,
         setUser,
 
@@ -235,7 +254,6 @@ export const AppContextProvider = ({ children }) => {
         setShowUserLogin,
 
         products,
-
         currency,
 
         addToCart,
@@ -253,6 +271,7 @@ export const AppContextProvider = ({ children }) => {
         getCartAmount,
 
         axios,
+
         fetchProducts,
         fetchUser
     };
