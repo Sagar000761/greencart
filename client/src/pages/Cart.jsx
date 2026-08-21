@@ -5,18 +5,20 @@ import toast from "react-hot-toast";
 
 const Cart = () => {
 
-    const {
-        products,
-        currency,
-        cartItems,
-        removeFromCart,
-        getCartCount,
-        updateCart,
-        navigate,
-        getCartAmount,
-        axios,
-        user
-    } = useAppContext();
+const {
+  products,
+  currency,
+  cartItems,
+  removeFromCart,
+  getCartCount,
+  updateCart,
+  navigate,
+  getCartAmount,
+  axios,
+  user,
+  setCartItems,
+  fetchUser,
+} = useAppContext();
 
     const [showAddress, setShowAddress] = useState(false);
     const [cartArray, setCartArray] = useState([]);
@@ -114,107 +116,87 @@ const Cart = () => {
     // PLACE ORDER
     // =========================
 
-    const placeOrder = async () => {
+const placeOrder = async () => {
+  try {
+    if (!selectedAddress) {
+      return toast.error("Please select an address");
+    }
 
-        try {
+    if (!cartArray || cartArray.length === 0) {
+      return toast.error("Your cart is empty");
+    }
 
-            if (!selectedAddress) {
-                return toast.error(
-                    "Please select an address"
-                );
-            }
+    const orderItems = cartArray.map((item) => ({
+      product: item._id,
+      quantity: item.quantity,
+    }));
 
-            if (cartArray.length === 0) {
-                return toast.error(
-                    "Your cart is empty"
-                );
-            }
+    // ==========================================
+    // COD
+    // ==========================================
 
-            const items = cartArray.map((item) => ({
-                product: item._id,
-                quantity: item.quantity
-            }));
-
-            // =========================
-            // COD
-            // =========================
-
-            if (paymentOption === "COD") {
-
-                const { data } =
-                    await axios.post(
-                        "/api/order/cod",
-                        {
-                            items,
-                            address: selectedAddress._id
-                        }
-                    );
-
-                if (data.success) {
-
-                    toast.success(
-                        data.message
-                    );
-
-                    navigate("/my-orders");
-
-                } else {
-
-                    toast.error(
-                        data.message
-                    );
-                }
-
-            }
-
-            // =========================
-            // ONLINE PAYMENT
-            // =========================
-
-            else {
-
-                const { data } =
-                    await axios.post(
-                        "/api/order/stripe",
-                        {
-                            items,
-                            address: selectedAddress._id
-                        }
-                    );
-
-                if (data.success) {
-
-                    console.log(
-                        "💳 REDIRECTING TO STRIPE"
-                    );
-
-                    window.location.replace(
-                        data.url
-                    );
-
-                } else {
-
-                    toast.error(
-                        data.message
-                    );
-                }
-            }
-
-        } catch (err) {
-
-            console.log(
-                "PLACE ORDER ERROR:",
-                err.response?.data ||
-                err.message
-            );
-
-            toast.error(
-                err.response?.data?.message ||
-                err.message
-            );
+    if (paymentOption === "COD") {
+      const { data } = await axios.post(
+        "/api/order/cod",
+        {
+          items: orderItems,
+          address: selectedAddress._id,
         }
-    };
+      );
 
+      if (data.success) {
+        toast.success(data.message);
+
+        // Clear frontend cart immediately
+        setCartItems({});
+
+        // Get fresh user/cart data from database
+        await fetchUser();
+
+        // Make sure frontend stays empty
+        setCartItems({});
+
+        // Go to My Orders
+        navigate("/my-orders");
+
+      } else {
+        toast.error(data.message);
+      }
+
+      return;
+    }
+
+    // ==========================================
+    // ONLINE PAYMENT
+    // ==========================================
+
+    const { data } = await axios.post(
+      "/api/order/stripe",
+      {
+        items: orderItems,
+        address: selectedAddress._id,
+      }
+    );
+
+    if (data.success) {
+      window.location.replace(data.url);
+    } else {
+      toast.error(data.message);
+    }
+
+  } catch (err) {
+    console.log(
+      "PLACE ORDER ERROR:",
+      err.response?.data || err.message
+    );
+
+    toast.error(
+      err.response?.data?.message ||
+      err.message ||
+      "Something went wrong"
+    );
+  }
+};
     // =========================
     // EMPTY CART
     // =========================
