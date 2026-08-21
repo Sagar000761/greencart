@@ -1,12 +1,44 @@
-import express from 'express'
-import authUser from '../middlewares/authUser.js'
-import authSeller from '../middlewares/authSeller.js'
-import { getAllOrders, getUserOrders, placeOrderCod, placeOrderStripe } from '../controllers/orderController.js'
+import express from "express";
+import authUser from "../middlewares/authUser.js";
 
-const orderRouter=express.Router()
-orderRouter.post('/cod', authUser, placeOrderCod)
-orderRouter.post('/stripe', authUser, placeOrderStripe)
-orderRouter.get('/user', authUser, getUserOrders)
-orderRouter.get('/seller', authSeller, getAllOrders)
+import {
+    placeOrderCod,
+    placeOrderStripe,
+    verifyStripeSession,
+    getUserOrders,
+    getAllOrders,
+} from "../controllers/orderController.js";
 
-export default orderRouter
+const orderRouter = express.Router();
+
+orderRouter.post(
+    "/cod",
+    authUser,
+    placeOrderCod
+);
+
+orderRouter.post(
+    "/stripe",
+    authUser,
+    placeOrderStripe
+);
+
+// IMPORTANT: authUser nahi lagana
+orderRouter.get(
+    "/verify-session",
+    verifyStripeSession
+);
+
+orderRouter.get(
+    "/user",
+    authUser,
+    getUserOrders
+);
+
+orderRouter.get(
+    "/seller",
+    authUser,
+    getAllOrders
+);
+
+export default orderRouter;
