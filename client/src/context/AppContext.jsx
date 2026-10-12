@@ -5,7 +5,7 @@ import axios from "axios";
 import { dummyProducts } from "../assets/assets";
 
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || "https://greencart-seven-beta.vercel.app";
 
 export const AppContext = createContext();
 
