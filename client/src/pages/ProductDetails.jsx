@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import useAppContext from '../context/AppContext';
-import { Link, Links, useParams } from 'react-router-dom';
-import { assets } from '../assets/assets';
+import { Link, useParams } from 'react-router-dom';
+import { assets, resolveProductImage } from '../assets/assets';
 import ProductCart from '../components/ProductCart';
 const ProductDetails = () => {
     const {products, navigate, currency, addToCart}=useAppContext()
@@ -10,15 +10,15 @@ const ProductDetails = () => {
     const [thumbnail, setThumbnail] = useState(null);
     const product=products.find((item)=>item._id===id)
     useEffect(()=>{
-        if(products.length > 0){
+        if(products.length > 0 && product){
             let productsCopy = products.slice()
             productsCopy=productsCopy.filter((item)=> product.category === item.category)
             setRelatedProducts(productsCopy.slice(0,5))
         }
-    },[products])
+    },[products, product])
 
     useEffect(()=>{
-        setThumbnail(product && product.image && product.image.length > 0 ? product.image[0] : null)
+        setThumbnail(product && product.image && product.image.length > 0 ? resolveProductImage(product.image[0]) : assets.box_icon)
     },[product])
   return product && (  
     <div className="mt-12">
@@ -33,14 +33,23 @@ const ProductDetails = () => {
         <div className="flex gap-3">
             <div className="flex flex-col gap-3">
                 {product.image.map((image, index) => (
-                    <div key={index} onClick={() => setThumbnail(image)} className="border max-w-24 border-gray-500/30 rounded overflow-hidden cursor-pointer" >
-                        <img src={image} alt={`Thumbnail ${index + 1}`} />
+                    <div key={index} onClick={() => setThumbnail(resolveProductImage(image))} className="border max-w-24 border-gray-500/30 rounded overflow-hidden cursor-pointer" >
+                        <img 
+                            src={resolveProductImage(image)} 
+                            alt={`Thumbnail ${index + 1}`} 
+                            onError={(e) => { e.currentTarget.src = assets.box_icon; }}
+                        />
                     </div>
                 ))}
             </div>
 
             <div className="border border-gray-500/30 max-w-100 rounded overflow-hidden">
-                <img src={thumbnail} alt="Selected product" className="w-full h-full object-cover" />
+                <img 
+                    src={thumbnail || assets.box_icon} 
+                    alt="Selected product" 
+                    className="w-full h-full object-contain" 
+                    onError={(e) => { e.currentTarget.src = assets.box_icon; }}
+                />
             </div>
         </div>
 

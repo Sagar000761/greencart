@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useAppContext from "../context/AppContext";
+import { assets, resolveProductImage } from "../assets/assets";
 
 const MyOrders = () => {
   const [myOrders, setMyOrders] = useState([]);
@@ -97,9 +98,10 @@ const MyOrders = () => {
                   <div className="bg-primary/10 p-4 rounded-lg">
 
                     <img
-                      src={item.product?.image?.[0]}
+                      src={resolveProductImage(item.product?.image?.[0])}
                       alt={item.product?.name || "Product"}
                       className="w-16 h-16 object-contain"
+                      onError={(e) => { e.currentTarget.src = assets.box_icon; }}
                     />
 
                   </div>

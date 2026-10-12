@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import useAppContext from "../context/AppContext";
-import { assets } from "../assets/assets";
+import { assets, resolveProductImage } from "../assets/assets";
 import toast from "react-hot-toast";
 
 const Cart = () => {
@@ -283,9 +283,10 @@ const placeOrder = async () => {
                             >
 
                                 <img
-                                    className="max-w-full h-full object-cover"
-                                    src={product.image?.[0]}
+                                    className="max-w-full h-full object-contain"
+                                    src={resolveProductImage(product.image?.[0])}
                                     alt={product.name}
+                                    onError={(e) => { e.currentTarget.src = assets.box_icon; }}
                                 />
 
                             </div>

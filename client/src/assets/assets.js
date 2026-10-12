@@ -100,6 +100,60 @@ export const assets = {
   box_icon,
 };
 
+export const productImageMap = {
+  "potato_image_1": potato_image_1,
+  "potato_image_2": potato_image_2,
+  "potato_image_3": potato_image_3,
+  "potato_image_4": potato_image_4,
+  "tomato_image": tomato_image,
+  "carrot_image": carrot_image,
+  "spinach_image_1": spinach_image_1,
+  "onion_image_1": onion_image_1,
+  "apple_image": apple_image,
+  "orange_image": orange_image,
+  "banana_image_1": banana_image_1,
+  "mango_image_1": mango_image_1,
+  "grapes_image_1": grapes_image_1,
+  "amul_milk_image": amul_milk_image,
+  "paneer_image": paneer_image,
+  "eggs_image": eggs_image,
+  "paneer_image_2": paneer_image_2,
+  "cheese_image": cheese_image,
+  "coca_cola_image": coca_cola_image,
+  "pepsi_image": pepsi_image,
+  "sprite_image_1": sprite_image_1,
+  "fanta_image_1": fanta_image_1,
+  "seven_up_image_1": seven_up_image_1,
+  "basmati_rice_image": basmati_rice_image,
+  "wheat_flour_image": wheat_flour_image,
+  "quinoa_image": quinoa_image,
+  "brown_rice_image": brown_rice_image,
+  "barley_image": barley_image,
+  "brown_bread_image": brown_bread_image,
+  "butter_croissant_image": butter_croissant_image,
+  "chocolate_cake_image": chocolate_cake_image,
+  "whole_wheat_bread_image": whole_wheat_bread_image,
+  "vanilla_muffins_image": vanilla_muffins_image,
+  "maggi_image": maggi_image,
+  "top_ramen_image": top_ramen_image,
+  "knorr_soup_image": knorr_soup_image,
+  "yippee_image": yippee_image,
+  "maggi_oats_image": maggi_oats_image,
+};
+
+export const resolveProductImage = (src) => {
+  if (!src) return box_icon;
+  if (typeof src !== 'string') return src;
+  if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:') || src.startsWith('/assets/')) {
+    return src;
+  }
+  const cleanName = src.replace(/^\/images\/products\//, '').replace(/\.(png|jpg|jpeg|webp)$/i, '');
+  if (productImageMap[cleanName]) {
+    return productImageMap[cleanName];
+  }
+  return src;
+};
+
 export const categories = [
   {
     text: "Organic veggies",

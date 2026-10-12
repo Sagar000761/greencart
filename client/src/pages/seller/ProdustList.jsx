@@ -1,5 +1,6 @@
 import toast from "react-hot-toast";
 import useAppContext from "../../context/AppContext";
+import { assets, resolveProductImage } from "../../assets/assets";
 
 const ProductList = () => {
 
@@ -38,7 +39,12 @@ const ProductList = () => {
                                 <tr key={product._id} className="border-t border-gray-500/20">
                                     <td className="md:px-4 pl-2 md:pl-4 py-3 flex items-center space-x-3 truncate">
                                         <div className="border border-gray-300 rounded overflow-hidden">
-                                            <img src={product.image[0]} alt="Product" className="w-16" />
+                                            <img 
+                                                src={resolveProductImage(product.image?.[0])} 
+                                                alt="Product" 
+                                                className="w-16 h-16 object-contain" 
+                                                onError={(e) => { e.currentTarget.src = assets.box_icon; }}
+                                            />
                                         </div>
                                         <span className="truncate max-sm:hidden w-full">{product.name}</span>
                                     </td>

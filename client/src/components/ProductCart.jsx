@@ -1,4 +1,4 @@
-import { assets } from "../assets/assets";
+import { assets, resolveProductImage } from "../assets/assets";
 import useAppContext from "../context/AppContext";
 
 export default function ProductCart({product}){
@@ -7,7 +7,12 @@ export default function ProductCart({product}){
     return product && (
     <div onClick={()=>{navigate(`/allproducts/${product.category.toLowerCase()}/${product._id}`); scrollTo(0,0)}} className="border border-gray-500/20 rounded-md md:px-4 px-3 py-2 bg-white min-w-56 max-w-56 w-full">
         <div className="group cursor-pointer flex items-center justify-center px-2">
-            <img className="group-hover:scale-105 transition max-w-26 md:max-w-36" src={product.image[0]} alt={product.name} />
+            <img 
+                className="group-hover:scale-105 transition max-w-26 md:max-w-36 h-36 object-contain" 
+                src={resolveProductImage(product.image?.[0])} 
+                alt={product.name} 
+                onError={(e) => { e.currentTarget.src = assets.box_icon; }}
+            />
         </div>
         <div className="text-gray-500/60 text-sm">
             <p>{product.category}</p>
