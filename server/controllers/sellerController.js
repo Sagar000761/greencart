@@ -11,7 +11,7 @@ try{
             sameSite:process.env.NODE_ENV === 'production' ? 'none' :'lax' ,
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
-        return res.json({success: true, message: 'LoggedIn'})
+        return res.json({success: true, message: 'LoggedIn', token})
     } else {
         return res.json({success: false, message:'Invalid Credentials'})
     }} catch (err){

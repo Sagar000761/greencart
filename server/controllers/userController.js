@@ -29,6 +29,7 @@ export const register= async(req,res)=>{
         return res.json({
             success: true, 
             message: 'Account created successfully', 
+            token,
             user: { _id: user._id, email: user.email, name: user.name, cartItems: {} }
         })    
     } catch(err){
@@ -66,6 +67,7 @@ export const login = async(req,res)=>{
         return res.json({
             success: true, 
             message: 'Logged in successfully', 
+            token,
             user: { _id: user._id, email: user.email, name: user.name, cartItems: user.cartItems || {} }
         })
     } catch(err){
@@ -145,6 +147,7 @@ export const googleLogin = async (req, res) => {
         return res.json({
             success: true,
             message: 'Logged in with Google successfully',
+            token: jwtToken,
             user: {
                 _id: user._id,
                 email: user.email,

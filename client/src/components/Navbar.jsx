@@ -16,6 +16,8 @@ export default function Navbar(){
         } catch (err) {
             toast.success('Logged out successfully')
         } finally {
+            localStorage.removeItem('user_token')
+            localStorage.removeItem('user')
             setUser(null)
             navigate('/')
         }

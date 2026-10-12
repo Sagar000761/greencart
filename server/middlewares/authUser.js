@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken'
 
 const authUser = async (req, res, next) => {
-    console.log("COOKIES:", req.cookies)
-    console.log("TOKEN:", req.cookies?.token)   
-    const { token } = req.cookies
+    const authHeader = req.headers?.authorization
+    const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+    const token = req.cookies?.token || bearerToken || req.headers?.token
 
     if (!token) {
         return res.json({

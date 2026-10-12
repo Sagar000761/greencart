@@ -7,14 +7,39 @@ import { dummyProducts } from "../assets/assets";
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || "https://greencart-seven-beta.vercel.app";
 
+// Attach token from localStorage to all outgoing requests
+axios.interceptors.request.use((config) => {
+    const token = localStorage.getItem("user_token");
+    if (token) {
+        config.headers = config.headers || {};
+        config.headers.token = token;
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    const sellerToken = localStorage.getItem("seller_token");
+    if (sellerToken) {
+        config.headers = config.headers || {};
+        config.headers.sellertoken = sellerToken;
+    }
+    return config;
+});
+
 export const AppContext = createContext();
 
 export const AppContextProvider = ({ children }) => {
     const currency = import.meta.env.VITE_CURRENCY || '₹';
     const navigate = useNavigate();
 
-    const [user, setUser] = useState(null);
-    const [isSeller, setIsSeller] = useState(false);
+    const [user, setUser] = useState(() => {
+        try {
+            const saved = localStorage.getItem("user");
+            return saved ? JSON.parse(saved) : null;
+        } catch {
+            return null;
+        }
+    });
+    const [isSeller, setIsSeller] = useState(() => {
+        return Boolean(localStorage.getItem("seller_token"));
+    });
     const [showUserLogin, setShowUserLogin] = useState(false);
     const [products, setProducts] = useState(dummyProducts);
     const [cartItems, setCartItems] = useState({});
@@ -31,10 +56,14 @@ export const AppContextProvider = ({ children }) => {
             if (data.success) {
                 setIsSeller(true);
             } else {
-                setIsSeller(false);
+                if (!localStorage.getItem("seller_token")) {
+                    setIsSeller(false);
+                }
             }
         } catch (err) {
-            setIsSeller(false);
+            if (!localStorage.getItem("seller_token")) {
+                setIsSeller(false);
+            }
         }
     };
 
@@ -52,23 +81,25 @@ export const AppContextProvider = ({ children }) => {
 
             console.log("FETCH USER:", data);
 
-            if (data.success) {
+            if (data.success && data.user) {
                 setUser(data.user);
+                localStorage.setItem("user", JSON.stringify(data.user));
 
                 // Always take latest cart from database
                 setCartItems(data.user.cartItems || {});
             } else {
-                setUser(null);
-                setCartItems({});
+                const token = localStorage.getItem("user_token");
+                if (!token) {
+                    setUser(null);
+                    localStorage.removeItem("user");
+                    setCartItems({});
+                }
             }
         } catch (err) {
             console.log(
                 "FETCH USER ERROR:",
                 err.response?.data || err.message
             );
-
-            setUser(null);
-            setCartItems({});
         }
     };
 

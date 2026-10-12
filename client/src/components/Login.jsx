@@ -23,10 +23,16 @@ const Login = () => {
             });
             if (data.success) {
                 toast.success(data.message || "Logged in with Google successfully");
-                setUser(data.user);
-                if (fetchUser) await fetchUser();
+                if (data.token) {
+                    localStorage.setItem("user_token", data.token);
+                }
+                if (data.user) {
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                    setUser(data.user);
+                }
                 setShowUserLogin(false);
                 setShowGooglePrompt(false);
+                if (fetchUser) fetchUser();
                 navigate("/");
             } else {
                 toast.error(data.message);
@@ -97,9 +103,15 @@ const Login = () => {
                             ? "Logged in successfully"
                             : "Account created successfully")
                 );
-                setUser(data.user);
-                if (fetchUser) await fetchUser();
+                if (data.token) {
+                    localStorage.setItem("user_token", data.token);
+                }
+                if (data.user) {
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                    setUser(data.user);
+                }
                 setShowUserLogin(false);
+                if (fetchUser) fetchUser();
                 navigate("/");
             } else {
                 toast.error(data.message);
