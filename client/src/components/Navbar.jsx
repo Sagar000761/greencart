@@ -7,21 +7,17 @@ import toast from 'react-hot-toast'
 
 export default function Navbar(){
     const [open, setOpen] = React.useState(false)
-    const {user, setUser , setShowUserLogin , navigate ,searchQuery, setSearchQuery, getCartCount, getCartAmount, axios}=useAppContext()
+    const {user, setUser , setShowUserLogin , navigate ,searchQuery, setSearchQuery, getCartCount, axios}=useAppContext()
 
-    const logOut= async()=>{
+    const logOut = async () => {
         try {
-            const {data}= await axios.get('/api/user/logout')
-            if(data.success){
-                toast.success(data.message)
-                setUser(null)
-                navigate('/')
-            } else {
-                toast.error(data.message)
-            }
+            const { data } = await axios.get('/api/user/logout')
+            toast.success(data?.message || 'Logged out successfully')
         } catch (err) {
-            toast.error(err.message)
-            
+            toast.success('Logged out successfully')
+        } finally {
+            setUser(null)
+            navigate('/')
         }
     }
 
@@ -29,12 +25,12 @@ export default function Navbar(){
         if(searchQuery && searchQuery.length > 0){
             navigate('/allproducts')
         }
-    },[searchQuery])
+    },[searchQuery, navigate])
   return (
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all">
 
-            <NavLink to='/' onClick={()=>{setUser(false)}}>
-                <img  className='h-9' src={assets.logo} alt="logo" />
+            <NavLink to='/'>
+                <img className='h-9' src={assets.logo} alt="logo" />
             </NavLink>
 
             {/* Desktop Menu */}
@@ -61,7 +57,7 @@ export default function Navbar(){
                     <div className='relative group'>
                         <img src={assets.profile_icon} className='w-10' alt="" />
                         <ul className='hidden group-hover:block absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-30 rounded-md text-sm z-40'>
-                            <li onClick={()=>{navigate('my-orders')}} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>My Orders</li>
+                            <li onClick={()=>{navigate('/my-orders')}} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>My Orders</li>
                             <li onClick={()=>{logOut()}} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>Logout</li>
                         </ul>
                     </div>
@@ -86,7 +82,7 @@ export default function Navbar(){
                 <NavLink to='/' onClick={()=>{setOpen(false)}}>Home</NavLink>
                 <NavLink to='/allproducts' onClick={()=>{setOpen(false)}}>All Product</NavLink>
                 {user && 
-                <NavLink to='/allproducts' onClick={()=>{setOpen(false)}}>My Order</NavLink>
+                <NavLink to='/my-orders' onClick={()=>{setOpen(false)}}>My Order</NavLink>
                 }
                 <NavLink to='/' onClick={()=>{setOpen(false)}}>Contact</NavLink>
                 

@@ -14,14 +14,25 @@ import orderRouter from './routes/orderRoutes.js'
 import { stripeWebhooks } from './controllers/orderController.js'
 
 const app = express()
+const port = process.env.PORT || 4000
 
 const allowedOrigins = [
     'http://localhost:5173',
-    "https://greencart-sagar.vercel.app"
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'https://greencart-sagar.vercel.app'
 ]
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true)
+        } else {
+            callback(null, true)
+        }
+    },
     credentials: true
 }))
 
@@ -39,8 +50,11 @@ app.get('/', (req, res) => {
     res.send('API is working')
 })
 
+import { seedInitialProducts } from './configs/seedData.js'
+
 // Connect database/cloudinary
 await connectDB()
+await seedInitialProducts()
 await connectCloudinary()
 
 app.use('/api/user', userRouter)
@@ -49,5 +63,11 @@ app.use('/api/product', productRouter)
 app.use('/api/cart', cartRouter)
 app.use('/api/address', addressRouter)
 app.use('/api/order', orderRouter)
+
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`)
+    })
+}
 
 export default app

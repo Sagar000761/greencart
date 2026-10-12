@@ -5,20 +5,21 @@ import toast from "react-hot-toast";
 
 const Cart = () => {
 
-const {
-  products,
-  currency,
-  cartItems,
-  removeFromCart,
-  getCartCount,
-  updateCart,
-  navigate,
-  getCartAmount,
-  axios,
-  user,
-  setCartItems,
-  fetchUser,
-} = useAppContext();
+    const {
+        products,
+        currency,
+        cartItems,
+        removeFromCart,
+        getCartCount,
+        updateCart,
+        navigate,
+        getCartAmount,
+        axios,
+        user,
+        setCartItems,
+        fetchUser,
+        setShowUserLogin
+    } = useAppContext();
 
     const [showAddress, setShowAddress] = useState(false);
     const [cartArray, setCartArray] = useState([]);
@@ -202,32 +203,32 @@ const placeOrder = async () => {
     // =========================
 
     if (!user) {
-        return null;
-    }
-
-    if (products.length === 0) {
-        return null;
+        return (
+            <div className="mt-20 text-center pb-20">
+                <h2 className="text-2xl font-medium">Please login to view your cart</h2>
+                <button
+                    onClick={() => setShowUserLogin(true)}
+                    className="mt-6 bg-primary text-white px-6 py-3 rounded-md hover:bg-primary-dull transition"
+                >
+                    Login
+                </button>
+            </div>
+        );
     }
 
     if (getCartCount() === 0) {
-
         return (
             <div className="mt-20 text-center pb-20">
-
-                <h2 className="text-2xl font-medium">
-                    Your cart is empty
-                </h2>
-
+                <h2 className="text-2xl font-medium">Your cart is empty</h2>
                 <button
                     onClick={() => {
                         navigate("/allproducts");
                         scrollTo(0, 0);
                     }}
-                    className="mt-6 bg-primary text-white px-6 py-3"
+                    className="mt-6 bg-primary text-white px-6 py-3 rounded-md hover:bg-primary-dull transition"
                 >
                     Continue Shopping
                 </button>
-
             </div>
         );
     }

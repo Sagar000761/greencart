@@ -22,11 +22,15 @@ export const register= async(req,res)=>{
 
         res.cookie('token', token, {
             httpOnly: true, //prevent javascript to access cookie
-            secure:process.env.NODE_ENV === 'production', //use secure cookies in production
-            sameSite:process.env.NODE_ENV === 'production' ? 'none' :'strict' , //CSRF protection
-            maxAge: 7 * 24 * 60 * 60 * 100,
+            secure: process.env.NODE_ENV === 'production', //use secure cookies in production
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', //CSRF protection
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         })
-        return res.json({success: true, user:{email: user.email, name:user.name}})    
+        return res.json({
+            success: true, 
+            message: 'Account created successfully', 
+            user: { _id: user._id, email: user.email, name: user.name, cartItems: {} }
+        })    
     } catch(err){
         console.log(err.message)
         res.json({success:false, message:err.message})
@@ -55,11 +59,15 @@ export const login = async(req,res)=>{
 
         res.cookie('token', token, {
             httpOnly: true, 
-            secure:process.env.NODE_ENV === 'production', 
-            sameSite:process.env.NODE_ENV === 'production' ? 'none' :'strict' ,
+            secure: process.env.NODE_ENV === 'production', 
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
-        return res.json({success: true, user:{email: user.email, name:user.name}})
+        return res.json({
+            success: true, 
+            message: 'Logged in successfully', 
+            user: { _id: user._id, email: user.email, name: user.name, cartItems: user.cartItems || {} }
+        })
     } catch(err){
         console.log(err.message)
         res.json({success:false, message:err.message})
@@ -83,8 +91,8 @@ export const logOut= async (req,res)=>{
     try{
         res.clearCookie('token',{
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production' ,
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
         })
         return res.json({success: true, message: 'Logged Out'})
     } catch(err){
@@ -92,3 +100,61 @@ export const logOut= async (req,res)=>{
         res.json({success:false, message:err.message})
     }
 }
+
+// Google Login: /api/user/google-login
+export const googleLogin = async (req, res) => {
+    try {
+        const { token, email, name } = req.body;
+        let userEmail = email;
+        let userName = name;
+
+        if (token) {
+            const decoded = jwt.decode(token);
+            if (decoded && decoded.email) {
+                userEmail = decoded.email;
+                userName = decoded.name || userName || 'Google User';
+            }
+        }
+
+        if (!userEmail) {
+            return res.json({ success: false, message: 'Google email is required' });
+        }
+
+        let user = await User.findOne({ email: userEmail });
+
+        if (!user) {
+            const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+            user = await User.create({
+                name: userName || userEmail.split('@')[0],
+                email: userEmail,
+                password: hashedPassword,
+                cartItems: {}
+            });
+        }
+
+        const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        res.cookie('token', jwtToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.json({
+            success: true,
+            message: 'Logged in with Google successfully',
+            user: {
+                _id: user._id,
+                email: user.email,
+                name: user.name,
+                cartItems: user.cartItems || {}
+            }
+        });
+    } catch (err) {
+        console.log("GOOGLE LOGIN ERROR:", err.message);
+        return res.json({ success: false, message: err.message });
+    }
+};
+

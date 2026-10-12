@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { dummyProducts } from "../assets/assets";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
@@ -12,10 +13,10 @@ export const AppContextProvider = ({ children }) => {
     const currency = import.meta.env.VITE_CURRENCY;
     const navigate = useNavigate();
 
-    const [user, setUser] = useState(false);
+    const [user, setUser] = useState(null);
     const [isSeller, setIsSeller] = useState(false);
     const [showUserLogin, setShowUserLogin] = useState(false);
-    const [products, setProducts] = useState([]);
+    const [products, setProducts] = useState(dummyProducts);
     const [cartItems, setCartItems] = useState({});
     const [searchQuery, setSearchQuery] = useState([]);
 
@@ -79,13 +80,13 @@ export const AppContextProvider = ({ children }) => {
         try {
             const { data } = await axios.get("/api/product/list");
 
-            if (data.success) {
+            if (data.success && data.products && data.products.length > 0) {
                 setProducts(data.products);
             } else {
-                toast.error(data.message);
+                setProducts(dummyProducts);
             }
         } catch (err) {
-            toast.error(err.message);
+            setProducts(dummyProducts);
         }
     };
 
@@ -127,6 +128,7 @@ export const AppContextProvider = ({ children }) => {
 
     const addToCart = async (itemId) => {
         if (!user) {
+            setShowUserLogin(true);
             toast.error("Please login first");
             return;
         }
